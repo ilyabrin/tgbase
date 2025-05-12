@@ -1,0 +1,14 @@
+# rename this file to config.yaml and fill in the values
+database:
+  type: sqlite # or postgres
+  postgres:
+    dsn: "host=localhost user=postgres password=secret dbname=app port=5432 sslmode=disable"
+  sqlite:
+    path: "app.db"
+redis:
+  enabled: false
+  addr: "localhost:6379"
+  password: ""
+  db: 0
+telegram:
+  token: "your-telegram-bot-token"
