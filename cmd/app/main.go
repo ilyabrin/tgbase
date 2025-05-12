@@ -9,6 +9,7 @@ import (
 	"tgbase/config"
 	"tgbase/internal/bot"
 	"tgbase/internal/database"
+	"tgbase/internal/i18n"
 	"tgbase/internal/redis"
 	"tgbase/pkg/logger"
 )
@@ -26,6 +27,12 @@ func main() {
 		logger.Fatal("failed to load config: ", err)
 	}
 
+	// Инициализация i18n
+	i18n, err := i18n.NewI18n("locales")
+	if err != nil {
+		logger.Fatal("failed to initialize i18n: ", err)
+	}
+
 	// Инициализация базы данных (Postgres или SQLite)
 	var db database.Database
 	if cfg.Database.Type == "postgres" {
@@ -40,16 +47,20 @@ func main() {
 
 	// Инициализация Redis (опционально)
 	var redisClient *redis.Client
+
+	type RedisConfig struct {
+		Addr     string
+		Password string
+		DB       int
+	}
+
 	if cfg.Redis.Enabled {
-		redisClient, err = redis.NewRedisClient(ctx, struct {
-			Addr     string
-			Password string
-			DB       int
-		}{
+		redisConfig := RedisConfig{
 			Addr:     cfg.Redis.Addr,
 			Password: cfg.Redis.Password,
 			DB:       cfg.Redis.DB,
-		})
+		}
+		redisClient, err = redis.NewRedisClient(ctx, redisConfig)
 		if err != nil {
 			logger.Fatal("failed to connect to redis: ", err)
 		}
@@ -57,7 +68,7 @@ func main() {
 	}
 
 	// Инициализация Telegram бота
-	tgBot, err := bot.NewBot(cfg.Telegram.Token, db, redisClient, logger)
+	tgBot, err := bot.NewBot(cfg.Telegram.Token, db, redisClient, i18n, logger)
 	if err != nil {
 		logger.Fatal("failed to initialize bot: ", err)
 	}

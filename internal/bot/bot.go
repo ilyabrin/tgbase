@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"tgbase/internal/database"
+	"tgbase/internal/i18n"
 	"tgbase/internal/redis"
 	"tgbase/pkg/logger"
 
@@ -15,10 +16,11 @@ type Bot struct {
 	bot    *telebot.Bot
 	db     database.Database
 	redis  *redis.Client
+	i18n   *i18n.I18n
 	logger *logger.Logger
 }
 
-func NewBot(token string, db database.Database, redis *redis.Client, logger *logger.Logger) (*Bot, error) {
+func NewBot(token string, db database.Database, redis *redis.Client, i18n *i18n.I18n, logger *logger.Logger) (*Bot, error) {
 	bot, err := telebot.NewBot(telebot.Settings{
 		Token:  token,
 		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
@@ -31,6 +33,7 @@ func NewBot(token string, db database.Database, redis *redis.Client, logger *log
 		bot:    bot,
 		db:     db,
 		redis:  redis,
+		i18n:   i18n,
 		logger: logger,
 	}
 
