@@ -1,0 +1,61 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version to deploy (e.g., v1.0.0)"
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download release artifact
+        uses: dsaltares/fetch-gh-release-asset@master
+        with:
+          version: ${{ github.event.inputs.version }}
+          file: telegram-bot-linux-amd64
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Make executable
+        run: chmod +x telegram-bot-linux-amd64
+
+      - name: Copy binary and locales to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "telegram-bot-linux-amd64,locales/*"
+          target: "/opt/telegram-bot"
+          strip_components: 1
+
+      - name: Restart service
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            sudo systemctl restart telegram-bot
+            sudo systemctl enable telegram-bot
+
+  check-systemd:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check if systemd file exists
+        run: |
+          if [[ -f "deploy/telegram-bot.service" ]]; then
+            echo "Systemd file already exists. Please review changes carefully."
+            exit 0
+          fi

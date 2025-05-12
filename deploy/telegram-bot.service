@@ -1,0 +1,14 @@
+[Unit]
+Description=Telegram Bot Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/telegram-bot/telegram-bot-linux-amd64
+WorkingDirectory=/opt/telegram-bot
+Restart=always
+RestartSec=10
+EnvironmentFile=/opt/telegram-bot/.env
+
+[Install]
+WantedBy=multi-user.target
