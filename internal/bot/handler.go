@@ -1,29 +1,15 @@
 package bot
 
 import (
+	"tgbase/internal/bot/handlers"
+
 	"gopkg.in/telebot.v3"
 )
 
 func (b *Bot) registerHandlers() {
-	// Обработка команды /start
-	b.bot.Handle("/start", func(c telebot.Context) error {
-		lang := c.Sender().LanguageCode
-		if lang == "" {
-			lang = "en" // Fallback на английский
-		}
-		message := b.i18n.Localize(lang, "welcome", nil)
-		return c.Send(message)
-	})
+	// Register /start command handler
+	b.bot.Handle("/start", handlers.StartHandler(b.i18n))
 
-	// Обработка текстовых сообщений
-	b.bot.Handle(telebot.OnText, func(c telebot.Context) error {
-		lang := c.Sender().LanguageCode
-		if lang == "" {
-			lang = "en" // Fallback на английский
-		}
-		message := b.i18n.Localize(lang, "echo", map[string]any{
-			"Text": c.Text(),
-		})
-		return c.Send(message)
-	})
+	// Register text message handler
+	b.bot.Handle(telebot.OnText, handlers.TextHandler(b.i18n))
 }
