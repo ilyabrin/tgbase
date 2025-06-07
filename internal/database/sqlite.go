@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 type SQLiteDB struct {
@@ -12,7 +12,7 @@ type SQLiteDB struct {
 }
 
 func NewSQLiteDB(ctx context.Context, path string) (*SQLiteDB, error) {
-	db, err := sql.Open("sqlite3", path)
+	db, err := sql.Open("sqlite", path)
 	if err != nil {
 		return nil, err
 	}
