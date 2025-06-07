@@ -3,6 +3,8 @@ package database
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 
 	_ "github.com/lib/pq"
 )
@@ -28,4 +30,66 @@ func (p *PostgresDB) Close() error {
 	return p.db.Close()
 }
 
-// Реализуйте методы для работы с БД по необходимости
+// Core helpers
+func (p *PostgresDB) Exec(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	return p.db.ExecContext(ctx, query, args...)
+}
+
+func (p *PostgresDB) Query(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+	return p.db.QueryContext(ctx, query, args...)
+}
+
+func (p *PostgresDB) QueryRow(ctx context.Context, query string, args ...any) *sql.Row {
+	return p.db.QueryRowContext(ctx, query, args...)
+}
+
+// CRUD methods
+func (p *PostgresDB) Insert(ctx context.Context, table string, data map[string]any) (sql.Result, error) {
+	var columns []string
+	var values []any
+	for k, v := range data {
+		columns = append(columns, k)
+		values = append(values, v)
+	}
+	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)",
+		table,
+		strings.Join(columns, ","),
+		strings.Repeat("?,", len(values)-1)+"?")
+	return p.Exec(ctx, query, values...)
+}
+
+func (p *PostgresDB) Update(ctx context.Context, table string, data map[string]any, where string, args ...any) (sql.Result, error) {
+	var setClauses []string
+	var values []any
+	for k, v := range data {
+		setClauses = append(setClauses, fmt.Sprintf("%s = ?", k))
+		values = append(values, v)
+	}
+	values = append(values, args...)
+	query := fmt.Sprintf("UPDATE %s SET %s WHERE %s",
+		table,
+		strings.Join(setClauses, ","),
+		where)
+	return p.Exec(ctx, query, values...)
+}
+
+func (p *PostgresDB) Delete(ctx context.Context, table string, where string, args ...any) (sql.Result, error) {
+	query := fmt.Sprintf("DELETE FROM %s WHERE %s", table, where)
+	return p.Exec(ctx, query, args...)
+}
+
+func (p *PostgresDB) Select(ctx context.Context, table string, columns []string, where string, args ...any) (*sql.Rows, error) {
+	query := fmt.Sprintf("SELECT %s FROM %s WHERE %s",
+		strings.Join(columns, ", "),
+		table,
+		where)
+	return p.Query(ctx, query, args...)
+}
+
+func (p *PostgresDB) SelectRow(ctx context.Context, table string, columns []string, where string, args ...any) *sql.Row {
+	query := fmt.Sprintf("SELECT %s FROM %s WHERE %s",
+		strings.Join(columns, ", "),
+		table,
+		where)
+	return p.QueryRow(ctx, query, args...)
+}
