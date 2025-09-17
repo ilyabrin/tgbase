@@ -123,30 +123,11 @@ go test ./...
 docker-compose down
 ```
 
-**Redis-specific tests**:
-
-```bash
-# Using project Redis container
-docker-compose up -d redis
-go test -v ./internal/redis/
-docker-compose down
-
-# Using standalone Redis
-docker run -d --name redis-test -p 6379:6379 redis:7-alpine
-go test -v ./internal/redis/
-docker stop redis-test && docker rm redis-test
-
-# Using test script
-chmod +x test-redis.sh
-./test-redis.sh
-```
-
 ### GitHub Actions
 
 The project includes comprehensive CI/CD with:
 
 - **Main CI** (`ci.yml`): Runs on every push/PR with Redis services
-- **Redis Tests** (`redis-tests.yml`): Matrix testing across Go/Redis versions
 - **Release** (`release.yml`): Automated releases on version tags
 
 The Redis integration tests run automatically on:
