@@ -30,6 +30,9 @@ jobs:
         with:
           go-version: "1.24"
 
+      - name: Install redis-cli
+        run: sudo apt-get update && sudo apt-get install -y redis-tools
+
       - name: Verify Redis connection
         run: |
           redis-cli ping
