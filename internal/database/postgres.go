@@ -47,23 +47,29 @@ func (p *PostgresDB) QueryRow(ctx context.Context, query string, args ...any) *s
 func (p *PostgresDB) Insert(ctx context.Context, table string, data map[string]any) (sql.Result, error) {
 	var columns []string
 	var values []any
+	var placeholders []string
+	i := 1
 	for k, v := range data {
 		columns = append(columns, k)
 		values = append(values, v)
+		placeholders = append(placeholders, fmt.Sprintf("$%d", i))
+		i++
 	}
 	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)",
 		table,
 		strings.Join(columns, ","),
-		strings.Repeat("?,", len(values)-1)+"?")
+		strings.Join(placeholders, ","))
 	return p.Exec(ctx, query, values...)
 }
 
 func (p *PostgresDB) Update(ctx context.Context, table string, data map[string]any, where string, args ...any) (sql.Result, error) {
 	var setClauses []string
 	var values []any
+	i := 1
 	for k, v := range data {
-		setClauses = append(setClauses, fmt.Sprintf("%s = ?", k))
+		setClauses = append(setClauses, fmt.Sprintf("%s = $%d", k, i))
 		values = append(values, v)
+		i++
 	}
 	values = append(values, args...)
 	query := fmt.Sprintf("UPDATE %s SET %s WHERE %s",

@@ -47,15 +47,12 @@ func main() {
 
 	// Инициализация Redis (опционально)
 	var redisClient *redis.Client
-
-	type RedisConfig struct {
-		Addr     string
-		Password string
-		DB       int
-	}
-
 	if cfg.Redis.Enabled {
-		redisConfig := RedisConfig{
+		redisConfig := struct {
+			Addr     string
+			Password string
+			DB       int
+		}{
 			Addr:     cfg.Redis.Addr,
 			Password: cfg.Redis.Password,
 			DB:       cfg.Redis.DB,

@@ -12,4 +12,10 @@ func (b *Bot) registerHandlers() {
 
 	// Register text message handler
 	b.bot.Handle(telebot.OnText, handlers.TextHandler(b.i18n))
+
+	// Register Redis commands if Redis is available
+	if b.redis != nil {
+		b.bot.Handle("/redis2", handlers.Redis2Handler(b.redis))
+		b.bot.Handle(handlers.BtnToggle, handlers.HandleRedis2Button(b.redis))
+	}
 }
