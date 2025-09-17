@@ -1,6 +1,7 @@
 # Go Telegram Bot Template (tgbase)
 
 [![CI Status](https://github.com/ilyabrin/tgbase/actions/workflows/ci.yml/badge.svg)](https://github.com/ilyabrin/tgbase/actions/workflows/ci.yml)
+[![Redis Tests](https://github.com/ilyabrin/tgbase/actions/workflows/redis-tests.yml/badge.svg)](https://github.com/ilyabrin/tgbase/actions/workflows/redis-tests.yml)
 
 [![Codecov](https://codecov.io/gh/ilyabrin/tgbase/branch/main/graph/badge.svg)](https://codecov.io/gh/ilyabrin/tgbase)
 
@@ -102,6 +103,61 @@ go run cmd/app/main.go
 4. **Тестирование**:
     - Пишите тесты в соответствующих `*_test.go` файлах для каждого пакета.
     - Запускайте тесты с помощью `go test ./...`.
+
+## Testing
+
+### Running Tests
+
+**Basic tests** (no external dependencies):
+
+```bash
+go test -short ./...
+```
+
+**All tests** (requires Redis):
+
+```bash
+# Start Redis first
+docker-compose up -d redis
+
+# Run all tests
+go test ./...
+
+# Clean up
+docker-compose down
+```
+
+**Redis-specific tests**:
+
+```bash
+# Using project Redis container
+docker-compose up -d redis
+go test -v ./internal/redis/
+docker-compose down
+
+# Using standalone Redis
+docker run -d --name redis-test -p 6379:6379 redis:7-alpine
+go test -v ./internal/redis/
+docker stop redis-test && docker rm redis-test
+
+# Using test script
+chmod +x test-redis.sh
+./test-redis.sh
+```
+
+### GitHub Actions
+
+The project includes comprehensive CI/CD with:
+
+- **Main CI** (`ci.yml`): Runs on every push/PR with Redis services
+- **Redis Tests** (`redis-tests.yml`): Matrix testing across Go/Redis versions
+- **Release** (`release.yml`): Automated releases on version tags
+
+The Redis integration tests run automatically on:
+
+- Changes to `internal/redis/**`
+- Changes to `go.mod`, `go.sum`
+- Manual workflow dispatch
 
 ## Available Commands
 
