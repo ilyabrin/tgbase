@@ -60,6 +60,7 @@ Thumbs.db
 *.a
 # Cache files
 *.cache
+.c**
 # Coverage files
 *.cov
 # Test files

@@ -1,0 +1,30 @@
+# Version control
+.git
+.gitignore
+
+# Build artifacts
+app.db
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Development and IDE files
+.idea/
+.vscode/
+.c**
+*.swp
+*.swo
+
+# Config files
+config.yaml
+config.docker.yaml
+
+# Documentation
+README.md
+TODO
+LICENSE
+
+# Test files
+*_test.go
