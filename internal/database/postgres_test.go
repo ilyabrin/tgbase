@@ -41,7 +41,7 @@ func TestPostgresDB_ErrorCases(t *testing.T) {
 		data := map[string]any{
 			"age": 30,
 		}
-		_, err := pdb.Update(ctx, "users", data, "id = ?", 1)
+		_, err := pdb.Update(ctx, "users", data, "id = $2", 1)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -52,7 +52,7 @@ func TestPostgresDB_ErrorCases(t *testing.T) {
 			WithArgs(1).
 			WillReturnError(fmt.Errorf("delete error"))
 
-		_, err := pdb.Delete(ctx, "users", "id = ?", 1)
+		_, err := pdb.Delete(ctx, "users", "id = $1", 1)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -63,7 +63,7 @@ func TestPostgresDB_ErrorCases(t *testing.T) {
 			WithArgs(1).
 			WillReturnError(fmt.Errorf("select error"))
 
-		_, err := pdb.Select(ctx, "users", []string{"id", "name"}, "id = ?", 1)
+		_, err := pdb.Select(ctx, "users", []string{"id", "name"}, "id = $1", 1)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -81,7 +81,7 @@ func TestPostgresDB_ErrorCases(t *testing.T) {
 		data := map[string]any{
 			"age": 30,
 		}
-		_, err := pdb.Update(ctx, "users", data, "id = ?", 1)
+		_, err := pdb.Update(ctx, "users", data, "id = $2", 1)
 		if err != nil {
 			t.Errorf("error executing update: %v", err)
 		}
@@ -92,7 +92,7 @@ func TestPostgresDB_ErrorCases(t *testing.T) {
 			WithArgs(1).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
-		_, err := pdb.Delete(ctx, "users", "id = ?", 1)
+		_, err := pdb.Delete(ctx, "users", "id = $1", 1)
 		if err != nil {
 			t.Errorf("error executing delete: %v", err)
 		}
@@ -105,7 +105,7 @@ func TestPostgresDB_ErrorCases(t *testing.T) {
 			WithArgs(1).
 			WillReturnRows(rows)
 
-		_, err := pdb.Select(ctx, "users", []string{"id", "name"}, "id = ?", 1)
+		_, err := pdb.Select(ctx, "users", []string{"id", "name"}, "id = $1", 1)
 		if err != nil {
 			t.Errorf("error executing select: %v", err)
 		}
@@ -118,7 +118,7 @@ func TestPostgresDB_ErrorCases(t *testing.T) {
 			WithArgs(1).
 			WillReturnRows(rows)
 
-		row := pdb.SelectRow(ctx, "users", []string{"id", "name"}, "id = ?", 1)
+		row := pdb.SelectRow(ctx, "users", []string{"id", "name"}, "id = $1", 1)
 		if row == nil {
 			t.Error("expected row, got nil")
 		}
