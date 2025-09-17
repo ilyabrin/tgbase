@@ -1,18 +1,25 @@
-# Project Template for Go Telegram Bot (tgbase)
+# Go Telegram Bot Template (tgbase)
 
 [![CI Status](https://github.com/ilyabrin/tgbase/actions/workflows/ci.yml/badge.svg)](https://github.com/ilyabrin/tgbase/actions/workflows/ci.yml)
+
 [![Codecov](https://codecov.io/gh/ilyabrin/tgbase/branch/main/graph/badge.svg)](https://codecov.io/gh/ilyabrin/tgbase)
 
-Go project template with:
+[![Go Reference](https://pkg.go.dev/badge/tgbase)](https://pkg.go.dev/tgbase)
 
-- Configuration via YAML and environment variables
-- Postgres/SQLite support
-- Redis support (optional)
-- Telegram bot integration using `telebot`
-- Internationalization (i18n) with support for RU and EN languages
-- CI/CD with GitHub Actions
-- Systemd service for automatic bot restarts
-- Unit tests for all components
+[![Go Report Card](https://goreportcard.com/badge/github.com/ilyabrin/tgbase)](https://goreportcard.com/report/github.com/ilyabrin/tgbase)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A clean, production-ready Go template for building Telegram bots with:
+
+- **Database Support**: PostgreSQL and SQLite with automatic migrations
+- **Redis Integration**: Optional Redis support for caching and session management
+- **Configuration Management**: YAML-based config with environment variable overrides
+- **Internationalization**: Multi-language support (EN/RU) with extensible localization
+- **Telegram Bot Framework**: Built on `telebot` with structured command handlers
+- **Docker Support**: Complete Docker and Docker Compose setup
+- **Testing**: Comprehensive unit tests with mocking
+- **Clean Architecture**: Organized code structure following Go best practices
 
 ## Установка зависимостей
 
@@ -20,22 +27,41 @@ Go project template with:
 go mod tidy
 ```
 
-## Структура проекта
+## Project Structure
 
-```
+```bash
 tgbase/
-├── cmd/                  # Точки входа в приложение
-│   └── app/              # Основное приложение
-├── config/               # Конфигурация приложения
-├── deploy/               # Файлы для деплоя (systemd, docker)
-├── internal/             # Внутренний код приложения
-│   ├── bot/              # Логика телеграм-бота
-│   │   └── handlers/     # Обработчики команд бота
-│   ├── database/         # Работа с базой данных
-│   ├── i18n/             # Интернационализация
-│   └── redis/            # Работа с Redis
-└── pkg/                  # Переиспользуемые пакеты
-    └── logger/           # Логирование
+├── cmd/app/              # Application entry point
+│   └── main.go           # Main application file
+├── config/               # Configuration management
+│   ├── config.go         # Config loading and environment variables
+│   └── config_test.go    # Configuration tests
+├── internal/             # Private application code
+│   ├── bot/              # Telegram bot implementation
+│   │   ├── bot.go        # Bot initialization and lifecycle
+│   │   ├── handler.go    # Handler registration
+│   │   ├── bot_test.go   # Bot tests
+│   │   └── handlers/     # Command handlers
+│   │       ├── start.go  # /start command handler
+│   │       ├── text.go   # Text message handler
+│   │       └── redis2.go # Redis demo command
+│   ├── database/         # Database layer
+│   │   ├── database.go   # Database interface
+│   │   ├── postgres.go   # PostgreSQL implementation
+│   │   ├── sqlite.go     # SQLite implementation
+│   │   └── *_test.go     # Database tests
+│   ├── i18n/             # Internationalization
+│   │   └── i18n.go       # Localization management
+│   └── redis/            # Redis client wrapper
+│       ├── redis.go      # Redis operations
+│       └── redis_test.go # Redis tests
+├── pkg/logger/           # Reusable logging package
+│   └── logger.go         # Logger implementation
+├── deploy/               # Deployment files
+│   └── telegram-bot.service # Systemd service
+├── docker-compose.yml    # Docker development environment
+├── Dockerfile            # Container build configuration
+└── config.yaml           # Application configuration
 ```
 
 ## Правила структуры проекта
@@ -77,13 +103,19 @@ go run cmd/app/main.go
     - Пишите тесты в соответствующих `*_test.go` файлах для каждого пакета.
     - Запускайте тесты с помощью `go test ./...`.
 
-## Добавление новых команд бота
+## Available Commands
 
-### Структура команд
+The bot currently supports the following commands:
 
-Для добавления новой команды в бота следуйте этим шагам:
+- `/start` - Welcome message with localization support
+- `/redis2` - Redis demonstration with interactive toggle button (requires Redis)
+- Text messages are echoed back with localization
 
-1. **Создайте обработчик команды** в директории `internal/bot/handlers/`:
+## Adding New Commands
+
+To add a new command to the bot:
+
+1. **Create a handler** in `internal/bot/handlers/`:
 
    ```go
    // internal/bot/handlers/command_name.go
@@ -106,19 +138,20 @@ go run cmd/app/main.go
    }
    ```
 
-2. **Зарегистрируйте команду** в файле `internal/bot/handler.go`:
+2. **Register the command** in `internal/bot/handler.go`:
 
    ```go
    func (b *Bot) registerHandlers() {
-       // Существующие обработчики
+       // Existing handlers
        b.bot.Handle("/start", handlers.StartHandler(b.i18n))
-       
-       // Новая команда
+       b.bot.Handle(telebot.OnText, handlers.TextHandler(b.i18n))
+
+       // Your new command
        b.bot.Handle("/command_name", handlers.CommandNameHandler(b.i18n))
    }
    ```
 
-3. **Добавьте тесты** для новой команды в `internal/bot/handlers/command_name_test.go`
+3. **Add tests** for the new command in `internal/bot/handlers/command_name_test.go`
 
 ### Рекомендации по командам
 
@@ -137,3 +170,62 @@ go run cmd/app/main.go
 - **Кнопки**: Inline и Reply кнопки
 - **Файлы**: Обработка загруженных пользователем файлов
 - **Callback-запросы**: Обработка нажатий на inline-кнопки
+
+## Docker Setup
+
+### Local Development with Docker
+
+1. Copy the sample config file and update it for Docker:
+
+   ```bash
+   cp config.yaml_sample config.docker.yaml
+   ```
+
+2. Edit `config.docker.yaml` and set your Telegram bot token:
+
+   ```yaml
+   telegram:
+     token: "your-telegram-bot-token"
+   ```
+
+3. Start the services using Docker Compose:
+
+   ```bash
+   docker compose up -d
+   ```
+
+   This will start:
+   - Redis server on port 6379
+   - Your Telegram bot with hot-reload
+
+4. Check the logs:
+
+   ```bash
+   docker compose logs -f
+   ```
+
+5. To stop the services:
+
+   ```bash
+   docker compose down
+   ```
+
+### Docker Commands
+
+- Rebuild the bot after code changes:
+
+  ```bash
+  docker compose build bot
+  ```
+
+- Restart a specific service:
+
+  ```bash
+  docker compose restart bot
+  ```
+
+- View service logs:
+
+  ```bash
+  docker compose logs -f [service]  # bot or redis
+  ```
