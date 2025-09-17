@@ -2,13 +2,9 @@
 
 [![CI Status](https://github.com/ilyabrin/tgbase/actions/workflows/ci.yml/badge.svg)](https://github.com/ilyabrin/tgbase/actions/workflows/ci.yml)
 [![Redis Tests](https://github.com/ilyabrin/tgbase/actions/workflows/redis-tests.yml/badge.svg)](https://github.com/ilyabrin/tgbase/actions/workflows/redis-tests.yml)
-
 [![Codecov](https://codecov.io/gh/ilyabrin/tgbase/branch/main/graph/badge.svg)](https://codecov.io/gh/ilyabrin/tgbase)
-
 [![Go Reference](https://pkg.go.dev/badge/tgbase)](https://pkg.go.dev/tgbase)
-
 [![Go Report Card](https://goreportcard.com/badge/github.com/ilyabrin/tgbase)](https://goreportcard.com/report/github.com/ilyabrin/tgbase)
-
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A clean, production-ready Go template for building Telegram bots with:
