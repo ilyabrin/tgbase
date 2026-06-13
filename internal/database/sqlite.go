@@ -95,3 +95,26 @@ func (s *SQLiteDB) SelectRow(ctx context.Context, table string, columns []string
 		where)
 	return s.QueryRow(ctx, query, args...)
 }
+
+// SoftDeleteDatabase implementation
+
+func (s *SQLiteDB) SoftDelete(ctx context.Context, table string, where string, args ...any) (sql.Result, error) {
+	query := fmt.Sprintf("UPDATE %s SET deleted_at = datetime('now') WHERE %s AND deleted_at IS NULL", table, where)
+	return s.Exec(ctx, query, args...)
+}
+
+func (s *SQLiteDB) Restore(ctx context.Context, table string, where string, args ...any) (sql.Result, error) {
+	query := fmt.Sprintf("UPDATE %s SET deleted_at = NULL WHERE %s", table, where)
+	return s.Exec(ctx, query, args...)
+}
+
+func (s *SQLiteDB) HardDelete(ctx context.Context, table string, where string, args ...any) (sql.Result, error) {
+	query := fmt.Sprintf("DELETE FROM %s WHERE %s", table, where)
+	return s.Exec(ctx, query, args...)
+}
+
+func (s *SQLiteDB) SelectDeleted(ctx context.Context, table string, columns []string, where string, args ...any) (*sql.Rows, error) {
+	query := fmt.Sprintf("SELECT %s FROM %s WHERE %s AND deleted_at IS NOT NULL",
+		strings.Join(columns, ", "), table, where)
+	return s.Query(ctx, query, args...)
+}

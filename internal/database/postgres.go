@@ -99,3 +99,26 @@ func (p *PostgresDB) SelectRow(ctx context.Context, table string, columns []stri
 		where)
 	return p.QueryRow(ctx, query, args...)
 }
+
+// SoftDeleteDatabase implementation
+
+func (p *PostgresDB) SoftDelete(ctx context.Context, table string, where string, args ...any) (sql.Result, error) {
+	query := fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE %s AND deleted_at IS NULL", table, where)
+	return p.Exec(ctx, query, args...)
+}
+
+func (p *PostgresDB) Restore(ctx context.Context, table string, where string, args ...any) (sql.Result, error) {
+	query := fmt.Sprintf("UPDATE %s SET deleted_at = NULL WHERE %s", table, where)
+	return p.Exec(ctx, query, args...)
+}
+
+func (p *PostgresDB) HardDelete(ctx context.Context, table string, where string, args ...any) (sql.Result, error) {
+	query := fmt.Sprintf("DELETE FROM %s WHERE %s", table, where)
+	return p.Exec(ctx, query, args...)
+}
+
+func (p *PostgresDB) SelectDeleted(ctx context.Context, table string, columns []string, where string, args ...any) (*sql.Rows, error) {
+	query := fmt.Sprintf("SELECT %s FROM %s WHERE %s AND deleted_at IS NOT NULL",
+		strings.Join(columns, ", "), table, where)
+	return p.Query(ctx, query, args...)
+}

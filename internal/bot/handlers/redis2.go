@@ -43,8 +43,6 @@ func HandleRedis2Button(redis *redis.Client) telebot.HandlerFunc {
 	return func(c telebot.Context) error {
 		ctx := context.Background()
 
-		// println("HandleRedis2Button", c.Callback().Unique)
-
 		// Create unique key for this user in this chat
 		key := fmt.Sprintf("chat:%d:user:%d:%s", c.Chat().ID, c.Sender().ID, Redis2Key)
 

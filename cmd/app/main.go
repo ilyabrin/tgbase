@@ -19,12 +19,7 @@ func main() {
 
 	ctx := context.Background()
 
-	var db database.Database
-	if cfg.Database.Type == "postgres" {
-		db, err = database.NewPostgresDB(ctx, cfg.Database.Postgres.DSN)
-	} else {
-		db, err = database.NewSQLiteDB(ctx, cfg.Database.SQLite.Path)
-	}
+	db, err := database.FromConfig(ctx, cfg)
 	if err != nil {
 		log.Fatal("failed to connect to database: ", err)
 	}
