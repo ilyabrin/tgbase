@@ -36,6 +36,19 @@ func (b *Bot) RegisterHandlers() {
 		b.Handle(telebot.OnText, handlers.TextHandler(b.i18n))
 	}
 
+	// Telegram Stars payments.
+	// Define your products and uncomment:
+	//
+	// product := handlers.StarProduct{
+	//     Title:       "Premium",
+	//     Description: "Unlock all features for 30 days",
+	//     Payload:     "premium_1month",
+	//     Stars:       100,
+	// }
+	// b.Handle("/buy",              handlers.SendInvoice(product))
+	// b.Handle(telebot.OnCheckout,  handlers.PreCheckout())
+	// b.Handle(telebot.OnPayment,   handlers.PaymentSuccess(b.db))
+
 	// Admin-only example — uncomment and add your handler:
 	// b.Handle("/admin", adminHandler, middleware.AdminOnly(b.adminIDs))
 }
