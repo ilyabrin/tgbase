@@ -18,9 +18,9 @@ type fakeContext struct {
 	text   string
 }
 
-func (f *fakeContext) Sender() *telebot.User                       { return &telebot.User{ID: f.userID} }
-func (f *fakeContext) Text() string                                { return f.text }
-func (f *fakeContext) Send(_ interface{}, _ ...interface{}) error  { return nil }
+func (f *fakeContext) Sender() *telebot.User                      { return &telebot.User{ID: f.userID} }
+func (f *fakeContext) Text() string                               { return f.text }
+func (f *fakeContext) Send(_ interface{}, _ ...interface{}) error { return nil }
 
 func ctx42() *fakeContext { return &fakeContext{userID: 42} }
 
@@ -182,7 +182,7 @@ func TestFSM_Route_NoMatchCallsFallback(t *testing.T) {
 		Fallback(func(telebot.Context) error { fallbackCalled = true; return nil })
 
 	c := ctx42()
-	// state is None — no step matches
+	// state is None - no step matches
 	handler := f.Route(On("step1", func(telebot.Context) error { return nil }))
 	require.NoError(t, handler(c))
 	assert.True(t, fallbackCalled)
@@ -192,7 +192,7 @@ func TestFSM_Route_NoMatchNoFallback_Silent(t *testing.T) {
 	f := New(NewMemoryStorage())
 	c := ctx42()
 	handler := f.Route(On("step1", func(telebot.Context) error { return nil }))
-	// state is None, no fallback — should return nil silently
+	// state is None, no fallback - should return nil silently
 	assert.NoError(t, handler(c))
 }
 
