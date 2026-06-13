@@ -33,6 +33,7 @@ func main() {
 	opts := []bot.Option{
 		bot.WithDB(db),
 		bot.WithI18n(locale),
+		bot.WithAdminIDs(cfg.Telegram.AdminIDs),
 	}
 
 	if cfg.Redis.Enabled {

@@ -23,7 +23,8 @@ type Config struct {
 		DB       int    `yaml:"db"`
 	} `yaml:"redis"`
 	Telegram struct {
-		Token string `yaml:"token"`
+		Token    string  `yaml:"token"`
+		AdminIDs []int64 `yaml:"admin_ids"`
 	} `yaml:"telegram"`
 }
 

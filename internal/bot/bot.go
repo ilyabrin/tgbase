@@ -21,6 +21,7 @@ type Bot struct {
 	redis         *redis.Client
 	i18n          *i18n.I18n
 	logger        *logger.Logger
+	adminIDs      []int64
 	webhookAddr   string
 	pollerTimeout time.Duration
 }
@@ -42,6 +43,10 @@ func WithI18n(i *i18n.I18n) Option {
 
 func WithLogger(l *logger.Logger) Option {
 	return func(b *Bot) { b.logger = l }
+}
+
+func WithAdminIDs(ids []int64) Option {
+	return func(b *Bot) { b.adminIDs = ids }
 }
 
 // WithWebhook switches the bot from long-polling to webhook mode.

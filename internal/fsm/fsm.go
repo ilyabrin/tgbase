@@ -24,6 +24,7 @@ package fsm
 
 import (
 	"context"
+	"strings"
 
 	"gopkg.in/telebot.v3"
 )
@@ -33,6 +34,9 @@ type State = string
 
 // None is the zero state — user has no active flow.
 const None State = ""
+
+// sep separates state name from optional inline data in storage.
+const sep = "\x00"
 
 // FSM routes Telegram messages based on per-user conversation state.
 type FSM struct {
@@ -47,6 +51,7 @@ func New(storage Storage) *FSM {
 
 // Fallback sets a handler called when the user's state matches no registered step.
 // Without a fallback, unmatched messages are silently ignored.
+// Returns the FSM for fluent chaining.
 func (f *FSM) Fallback(h telebot.HandlerFunc) *FSM {
 	f.fallback = h
 	return f
@@ -79,7 +84,7 @@ func (f *FSM) Route(steps ...Step) telebot.HandlerFunc {
 	}
 
 	return func(c telebot.Context) error {
-		state, err := f.storage.Get(context.Background(), c.Sender().ID)
+		state, err := f.GetState(c)
 		if err != nil {
 			return err
 		}
@@ -93,17 +98,47 @@ func (f *FSM) Route(steps ...Step) telebot.HandlerFunc {
 	}
 }
 
-// SetState transitions the sender to a new state.
+// SetState transitions the sender to a new state (clears any inline data).
 func (f *FSM) SetState(c telebot.Context, state State) error {
 	return f.storage.Set(context.Background(), c.Sender().ID, state)
 }
 
-// GetState returns the sender's current state.
-func (f *FSM) GetState(c telebot.Context) (State, error) {
-	return f.storage.Get(context.Background(), c.Sender().ID)
+// SetStateData transitions to a new state and stores a data string for the next step.
+// Retrieve it in the next handler with GetData.
+func (f *FSM) SetStateData(c telebot.Context, state State, data string) error {
+	return f.storage.Set(context.Background(), c.Sender().ID, state+sep+data)
 }
 
-// ClearState removes the sender's state, returning them to None.
+// GetState returns the sender's current state name (without inline data).
+func (f *FSM) GetState(c telebot.Context) (State, error) {
+	raw, err := f.storage.Get(context.Background(), c.Sender().ID)
+	if err != nil {
+		return None, err
+	}
+	state, _ := splitRaw(raw)
+	return state, nil
+}
+
+// GetData returns the data stored alongside the current state by SetStateData.
+// Returns an empty string if no data was stored.
+func (f *FSM) GetData(c telebot.Context) (string, error) {
+	raw, err := f.storage.Get(context.Background(), c.Sender().ID)
+	if err != nil {
+		return "", err
+	}
+	_, data := splitRaw(raw)
+	return data, nil
+}
+
+// ClearState removes the sender's state and data, returning them to None.
 func (f *FSM) ClearState(c telebot.Context) error {
 	return f.storage.Clear(context.Background(), c.Sender().ID)
+}
+
+func splitRaw(raw string) (state, data string) {
+	parts := strings.SplitN(raw, sep, 2)
+	if len(parts) == 2 {
+		return parts[0], parts[1]
+	}
+	return raw, ""
 }

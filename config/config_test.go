@@ -74,7 +74,8 @@ telegram:
 					DB:       0,
 				},
 				Telegram: struct {
-					Token string `yaml:"token"`
+					Token    string  `yaml:"token"`
+					AdminIDs []int64 `yaml:"admin_ids"`
 				}{
 					Token: "test-token",
 				},
@@ -123,7 +124,8 @@ telegram:
 					DB:       0,
 				},
 				Telegram: struct {
-					Token string `yaml:"token"`
+					Token    string  `yaml:"token"`
+					AdminIDs []int64 `yaml:"admin_ids"`
 				}{
 					Token: "env-token",
 				},
