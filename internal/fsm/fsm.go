@@ -36,7 +36,8 @@ type State = string
 const None State = ""
 
 // sep separates state name from optional inline data in storage.
-const sep = "\x00"
+// \x1f is ASCII Unit Separator — designed for this purpose, never appears in UTF-8 user input.
+const sep = "\x1f"
 
 // FSM routes Telegram messages based on per-user conversation state.
 type FSM struct {

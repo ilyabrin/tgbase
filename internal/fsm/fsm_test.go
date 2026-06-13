@@ -67,7 +67,7 @@ func TestSplitRaw(t *testing.T) {
 		assert.Equal(t, "", data)
 	})
 
-	t.Run("data may contain sep — only first sep splits", func(t *testing.T) {
+	t.Run("data may contain sep — only first sep is the delimiter", func(t *testing.T) {
 		state, data := splitRaw("step" + sep + "a" + sep + "b")
 		assert.Equal(t, "step", state)
 		assert.Equal(t, "a"+sep+"b", data)
