@@ -16,7 +16,7 @@ const (
 	StateAskAge  = "register:ask_age"
 )
 
-// RegisterStart handles /register — kicks off the flow.
+// RegisterStart handles /register - kicks off the flow.
 func RegisterStart(f *fsm.FSM) telebot.HandlerFunc {
 	return func(c telebot.Context) error {
 		if err := f.SetState(c, StateAskName); err != nil {

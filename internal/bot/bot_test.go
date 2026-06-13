@@ -81,5 +81,5 @@ func TestBot_DefaultLogger(t *testing.T) {
 	b, err := New("bad-token")
 	assert.Error(t, err) // token is invalid, but logger must be set before error return
 	assert.Nil(t, b)
-	// No panic — the logger was initialised internally before telebot.NewBot was called.
+	// No panic - the logger was initialised internally before telebot.NewBot was called.
 }

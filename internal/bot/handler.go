@@ -49,6 +49,6 @@ func (b *Bot) RegisterHandlers() {
 	// b.Handle(telebot.OnCheckout,  handlers.PreCheckout())
 	// b.Handle(telebot.OnPayment,   handlers.PaymentSuccess(b.db))
 
-	// Admin-only example — uncomment and add your handler:
+	// Admin-only example - uncomment and add your handler:
 	// b.Handle("/admin", adminHandler, middleware.AdminOnly(b.adminIDs))
 }

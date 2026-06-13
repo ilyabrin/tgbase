@@ -1,173 +1,140 @@
 # Examples
 
-This directory contains practical examples of how to implement common bot functionality using the tgbase framework.
+Practical patterns for common bot functionality. Copy what you need into `internal/bot/handlers/` and register in `handler.go`.
 
-## Available Examples
+## Available examples
 
-### 1. Basic Handlers (`basic_handler.go`)
+### 1. Basic handlers (`basic_handler.go`)
 
-- **BasicHandler**: Simple command that responds with a static message
-- **EchoHandler**: Echoes user input with localization support
+- **BasicHandler** - static response to a command
+- **EchoHandler** - echo user input with i18n
 
-### 2. Database Integration (`database_example.go`)
+### 2. Database (`database_example.go`)
 
-- **UserStatsHandler**: Tracks user interaction statistics in the database
-- **UserListHandler**: Queries and displays multiple database records
+- **UserStatsHandler** - track user interactions (INSERT/UPDATE/SELECT)
+- **UserListHandler** - paginated query results
 
-### 3. Redis Operations (`redis_example.go`)
+### 3. Redis (`redis_example.go`)
 
-- **CacheHandler**: Demonstrates caching expensive operations
-- **SessionHandler**: Session management with user data persistence
-- **CounterHandler**: Shared counter using Redis atomic operations
+- **CacheHandler** - cache expensive operations
+- **SessionHandler** - per-user session data via hash maps
+- **CounterHandler** - atomic shared counter
 
-### 4. Interactive Keyboards (`inline_keyboard_example.go`)
+### 4. Inline keyboards (`inline_keyboard_example.go`)
 
-- **MenuHandler**: Creates a main menu with multiple options
-- **QuestionHandler**: Yes/No questions with callback handling
-- **HandleCallbacks**: Universal callback handler for button interactions
-- **DynamicMenuHandler**: Menu that changes based on user state/permissions
+- **MenuHandler** - main menu with multiple buttons
+- **QuestionHandler** - yes/no with callback handling
+- **HandleCallbacks** - universal callback dispatcher
+- **DynamicMenuHandler** - state-aware menu
 
-## How to Use These Examples
+---
 
-### 1. Copy the handler you need
+## How to use
 
-```go
-// Copy the function to your handlers directory
+### 1. Copy the handler
+
+```bash
 cp examples/basic_handler.go internal/bot/handlers/my_handler.go
 ```
 
-### 2. Register the handler in your bot
+### 2. Register in `handler.go`
 
 ```go
-// In internal/bot/handler.go
-func (b *Bot) registerHandlers() {
-    // Existing handlers...
-
-    // Add your example handler
-    b.bot.Handle("/menu", examples.MenuHandler(b.i18n))
-    b.bot.Handle("/stats", examples.UserStatsHandler(b.db, b.i18n))
-
-    // Register callback handlers
-    b.bot.Handle("btn_yes", examples.HandleCallbacks(b.redis, b.i18n))
-    b.bot.Handle("btn_no", examples.HandleCallbacks(b.redis, b.i18n))
+func (b *Bot) RegisterHandlers() {
+    b.Handle("/menu",  myMenuHandler(b.i18n))
+    b.Handle("/stats", myStatsHandler(b.db, b.i18n))
 }
 ```
 
-### 3. Customize for your needs
+---
 
-- Modify the response messages
-- Add your own localization keys
-- Extend the database schema
-- Add new button types and callbacks
+## Common patterns
 
-## Example Usage Patterns
-
-### Database Operations
+### Database
 
 ```go
-// Create table
-createTableQuery := `CREATE TABLE IF NOT EXISTS my_table (...)`
-db.Exec(ctx, createTableQuery)
+ctx := context.Background()
 
-// Insert/Update with conflict resolution
-insertQuery := `INSERT ... ON CONFLICT ... DO UPDATE SET ...`
-db.Exec(ctx, insertQuery, params...)
+// Raw query
+db.Exec(ctx, "CREATE TABLE IF NOT EXISTS my_table (...)")
 
-// Query single row
-row := db.QueryRow(ctx, "SELECT ... WHERE id = $1", userID)
-row.Scan(&result)
+// Insert with upsert
+db.Exec(ctx, "INSERT INTO t (id, n) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET n = $2", id, n)
 
-// Query multiple rows
-rows, _ := db.Query(ctx, "SELECT ... ORDER BY ...")
+// Single row
+row := db.QueryRow(ctx, "SELECT name FROM users WHERE id = $1", userID)
+row.Scan(&name)
+
+// Multiple rows
+rows, _ := db.Query(ctx, "SELECT id, name FROM users ORDER BY id")
 defer rows.Close()
 for rows.Next() {
-    rows.Scan(&data)
+    rows.Scan(&id, &name)
 }
 ```
 
-### Redis Operations
+### Redis
 
 ```go
-// Basic key-value operations
-redis.Set(ctx, "key", "value", expiration)
+ctx := context.Background()
+
+redis.Set(ctx, "key", "value", ttlSeconds) // 0 = no expiry
 value, _ := redis.Get(ctx, "key")
 redis.Del(ctx, "key")
+exists, _ := redis.Exists(ctx, "key")
 
-// Hash operations for structured data
-redis.HSet(ctx, "hash_key", "field", "value")
-value, _ := redis.HGet(ctx, "hash_key", "field")
-allData, _ := redis.HGetAll(ctx, "hash_key")
+// Atomic counter
+n, _ := redis.Incr(ctx, "counter")
 
-// Atomic counters
-newValue, _ := redis.Incr(ctx, "counter_key")
+// Hash map
+redis.HSet(ctx, "user:42", "field", "value")
+value, _ = redis.HGet(ctx, "user:42", "field")
+all, _ := redis.HGetAll(ctx, "user:42")
 ```
 
-### Inline Keyboards
+### Inline keyboards
 
 ```go
-// Create keyboard
-inlineKeys := &telebot.ReplyMarkup{}
+markup := &telebot.ReplyMarkup{}
+btn1 := markup.Data("Yes", "btn_yes")
+btn2 := markup.Data("No",  "btn_no")
+markup.Inline(markup.Row(btn1, btn2))
 
-// Create buttons
-btn1 := inlineKeys.Data("Button Text", "callback_data")
-btn2 := inlineKeys.Data("Another Button", "other_callback")
+c.Send("Choose:", markup)
 
-// Arrange in rows
-inlineKeys.Inline(
-    inlineKeys.Row(btn1, btn2),
-    inlineKeys.Row(btn3),
-)
-
-// Send with message
-c.Send("Choose an option:", inlineKeys)
-
-// Handle callbacks
+// Callback handler
 func handleCallback(c telebot.Context) error {
-    defer c.Respond() // Always respond to remove loading state
-
+    defer c.Respond() // remove loading spinner
     switch c.Callback().Data {
-    case "callback_data":
-        return c.Edit("Button 1 pressed!")
-    case "other_callback":
-        return c.Edit("Button 2 pressed!")
+    case "btn_yes":
+        return c.Edit("You chose Yes!")
+    case "btn_no":
+        return c.Edit("You chose No!")
     }
     return nil
 }
 ```
 
-## Integration with Main Bot
-
-To integrate these examples into your main bot, you need to:
-
-1. Import the examples package in your handler registration
-2. Add the handlers to your `registerHandlers()` function
-3. Set up any required database tables
-4. Configure Redis if using Redis-based examples
-5. Add localization keys for any messages
-
-Example integration:
+### FSM (multi-step flows)
 
 ```go
-// internal/bot/handler.go
-import "tgbase/examples"
+f := fsm.New(fsm.NewRedisStorage(redisClient, fsm.WithTTL(3600))).
+    Fallback(defaultTextHandler)
 
-func (b *Bot) registerHandlers() {
-    // Basic commands
-    b.bot.Handle("/start", handlers.StartHandler(b.i18n))
+b.Handle("/start_flow", func(c telebot.Context) error {
+    f.SetState(c, "step1")
+    return c.Send("Step 1: enter something")
+})
 
-    // Example handlers
-    b.bot.Handle("/menu", examples.MenuHandler(b.i18n))
-    b.bot.Handle("/stats", examples.UserStatsHandler(b.db, b.i18n))
-
-    // Redis examples (if Redis is available)
-    if b.redis != nil {
-        b.bot.Handle("/cache", examples.CacheHandler(b.redis, b.i18n))
-        b.bot.Handle("/session", examples.SessionHandler(b.redis, b.i18n))
-        b.bot.Handle("/counter", examples.CounterHandler(b.redis, b.i18n))
-    }
-
-    // Callback handlers
-    b.bot.Handle(examples.BtnYes, examples.HandleCallbacks(b.redis, b.i18n))
-    b.bot.Handle(examples.BtnNo, examples.HandleCallbacks(b.redis, b.i18n))
-    b.bot.Handle(examples.BtnHelp, examples.HandleCallbacks(b.redis, b.i18n))
-}
+b.Handle(telebot.OnText, f.Route(
+    fsm.On("step1", func(c telebot.Context) error {
+        f.SetStateData(c, "step2", c.Text()) // save input, advance state
+        return c.Send("Step 2: enter something else")
+    }),
+    fsm.On("step2", func(c telebot.Context) error {
+        prev, _ := f.GetData(c)             // retrieve step1 input
+        f.ClearState(c)
+        return c.Send("Done! You entered: " + prev + " and " + c.Text())
+    }),
+))
+```

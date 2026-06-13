@@ -19,7 +19,7 @@ type mockContext struct {
 	called   bool
 }
 
-func (m *mockContext) Sender() *telebot.User   { return &telebot.User{ID: m.senderID} }
+func (m *mockContext) Sender() *telebot.User       { return &telebot.User{ID: m.senderID} }
 func (m *mockContext) Callback() *telebot.Callback { return nil }
 func (m *mockContext) Message() *telebot.Message {
 	return &telebot.Message{Text: m.text}
@@ -130,7 +130,7 @@ func TestRateLimit_ResetsAfterWindow(t *testing.T) {
 
 	time.Sleep(60 * time.Millisecond)
 
-	require.NoError(t, handler(ctx)) // new window — allowed
+	require.NoError(t, handler(ctx)) // new window - allowed
 	assert.Equal(t, 2, calls)
 }
 
