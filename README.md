@@ -174,6 +174,56 @@ b.Use(middleware.RateLimit(3, time.Minute, func(c telebot.Context) error {
 
 ---
 
+## Deep links (`pkg/deeplink`)
+
+```go
+import "tgbase/pkg/deeplink"
+
+// /start handler - works for both plain /start and /start <payload>
+b.Handle("/start", func(c telebot.Context) error {
+    payload := deeplink.Parse(c) // "" for plain /start
+    if payload == "" {
+        return c.Send("Welcome!")
+    }
+    return c.Send("You came via: " + payload)
+})
+
+// Generate a shareable deep link
+link := deeplink.Build("mybot", "ref_42")
+// → "https://t.me/mybot?start=ref_42"
+```
+
+---
+
+## Inline mode
+
+Lets users type `@botname <query>` in any chat and pick a result to send.
+Handler is registered automatically in `RegisterHandlers`. Customise
+`InlineHandler()` in `internal/bot/handlers/inline.go` to return results
+from your database or any other source.
+
+```go
+// internal/bot/handlers/inline.go
+func InlineHandler() telebot.HandlerFunc {
+    return func(c telebot.Context) error {
+        text := c.Query().Text
+        results := telebot.Results{
+            &telebot.ArticleResult{
+                ResultBase:  telebot.ResultBase{ID: "r0"},
+                Title:       text,
+                Description: "Send this to the chat",
+                Text:        text,
+            },
+        }
+        return c.Answer(&telebot.QueryResponse{Results: results, CacheTime: 60})
+    }
+}
+```
+
+> **Note:** inline mode must be enabled in [@BotFather](https://t.me/BotFather) → Bot Settings → Inline Mode.
+
+---
+
 ## Inline keyboards (`pkg/keyboard`)
 
 ```go

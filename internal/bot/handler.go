@@ -17,6 +17,7 @@ func (b *Bot) RegisterHandlers() {
 	b.Use(middleware.RateLimit(30, time.Minute))
 
 	b.Handle("/start", handlers.StartHandler(b.i18n))
+	b.Handle(telebot.OnQuery, handlers.InlineHandler())
 
 	if b.redis != nil {
 		b.Handle("/redis2", handlers.Redis2Handler(b.redis))
