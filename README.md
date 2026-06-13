@@ -8,7 +8,7 @@
 
 Developer-friendly template for building Telegram bots in Go. Clone, configure, add handlers.
 
-**Batteries included:** database (Postgres/SQLite), Redis, FSM, middleware, i18n, payments (Stars), Docker.
+**Batteries included:** database (Postgres/SQLite), Redis, FSM, middleware, i18n, payments (Stars), keyboards, pagination, broadcast, deep links, inline mode, Docker.
 
 ---
 
@@ -53,8 +53,11 @@ tgbase/
 │       ├── redis.go              # Client, Config, NewRedisClient, NewMockClient
 │       └── real_redis.go         # go-redis/v9 implementation
 ├── pkg/
+│   ├── deeplink/deeplink.go      # Parse /start payload, Build deep link URLs
+│   ├── keyboard/keyboard.go      # Fluent inline keyboard builder
 │   ├── logger/logger.go          # stdlib logger wrapper
-│   └── middleware/middleware.go  # AdminOnly, Logger, RateLimit
+│   ├── middleware/middleware.go  # AdminOnly, Logger, RateLimit, Recover
+│   └── pagination/pagination.go  # Inline ← N/M → keyboard + page helper
 ├── config.yaml                   # application configuration
 ├── docker-compose.yml
 └── Dockerfile
@@ -171,6 +174,58 @@ b.Use(middleware.RateLimit(3, time.Minute, func(c telebot.Context) error {
 | `Logger(l)`                    | Log every update: user ID, name, text/callback |
 | `RateLimit(n, per, onReject?)` | Per-user sliding window rate limiter           |
 | `Recover(l)`                   | Catch handler panics, log, return error        |
+
+---
+
+## Broadcast
+
+Send a message to multiple users with automatic rate limiting (default 20 msg/s,
+safely below Telegram's 30 msg/s cap). The broadcast stops early on context
+cancellation.
+
+```go
+result := b.Broadcast(ctx, userIDs, "🔔 Announcement text",
+    bot.WithBroadcastDelay(50*time.Millisecond), // optional, 50ms is default
+    bot.WithBroadcastOnError(func(id int64, err error) {
+        log.Printf("failed to send to %d: %v", id, err)
+    }),
+)
+fmt.Printf("sent: %d, failed: %d\n", result.Sent, result.Failed)
+```
+
+---
+
+## Pagination (`pkg/pagination`)
+
+Build ← N/M → navigation keyboards for DB result sets.
+
+```go
+import "tgbase/pkg/pagination"
+
+pg := pagination.New(totalUsers, 10) // 10 per page
+
+// In list handler:
+items := db.fetchPage(pg.Offset(page), pg.PageSize)
+c.Send(renderList(items), pg.Keyboard(page, "users"))
+
+// Register callbacks:
+b.Handle("\fusers_prev", usersPageHandler)
+b.Handle("\fusers_next", usersPageHandler)
+
+func usersPageHandler(c telebot.Context) error {
+    page, _ := pagination.Page(c) // parse target page from callback
+    items := db.fetchPage(pg.Offset(page), pg.PageSize)
+    return c.Edit(renderList(items), pg.Keyboard(page, "users"))
+}
+```
+
+| Function                  | Description                                   |
+| ------------------------- | --------------------------------------------- |
+| `New(total, pageSize)`    | Create a pager                                |
+| `.Pages()`                | Total page count                              |
+| `.Offset(page)`           | SQL OFFSET for page (1-indexed)               |
+| `.Keyboard(page, prefix)` | Build prev/N/M/next inline row; nil if 1 page |
+| `Page(c)`                 | Parse target page from callback context       |
 
 ---
 
