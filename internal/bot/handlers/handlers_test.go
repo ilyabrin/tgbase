@@ -6,7 +6,6 @@ import (
 	"testing"
 	"tgbase/internal/fsm"
 	"tgbase/internal/i18n"
-	"tgbase/internal/redis"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -101,32 +100,6 @@ func TestTextHandler(t *testing.T) {
 	assert.NotNil(t, handler)
 }
 
-// TestRedis2Handler tests that Redis2Handler returns a function
-func TestRedis2Handler(t *testing.T) {
-	// Test that handler function is created successfully
-	redisClient := &redis.Client{} // Empty client for testing
-	handler := Redis2Handler(redisClient)
-
-	// Test that handler is not nil
-	assert.NotNil(t, handler)
-}
-
-// TestHandleRedis2Button tests that HandleRedis2Button returns a function
-func TestHandleRedis2Button(t *testing.T) {
-	// Test that handler function is created successfully
-	redisClient := &redis.Client{} // Empty client for testing
-	handler := HandleRedis2Button(redisClient)
-
-	// Test that handler is not nil
-	assert.NotNil(t, handler)
-}
-
-// TestHandlers_Constants tests that constants are properly defined
-func TestHandlers_Constants(t *testing.T) {
-	assert.Equal(t, "redis2", Redis2Key)
-	assert.Equal(t, "btn_toggle", BtnToggle)
-}
-
 // TestStartHandler_WithNilI18n tests StartHandler with nil i18n
 func TestStartHandler_WithNilI18n(t *testing.T) {
 	// Test that handler function is created even with nil i18n
@@ -140,24 +113,6 @@ func TestStartHandler_WithNilI18n(t *testing.T) {
 func TestTextHandler_WithNilI18n(t *testing.T) {
 	// Test that handler function is created even with nil i18n
 	handler := TextHandler(nil)
-
-	// Test that handler is not nil
-	assert.NotNil(t, handler)
-}
-
-// TestRedis2Handler_WithNilRedis tests Redis2Handler with nil redis
-func TestRedis2Handler_WithNilRedis(t *testing.T) {
-	// Test that handler function is created even with nil redis
-	handler := Redis2Handler(nil)
-
-	// Test that handler is not nil
-	assert.NotNil(t, handler)
-}
-
-// TestHandleRedis2Button_WithNilRedis tests HandleRedis2Button with nil redis
-func TestHandleRedis2Button_WithNilRedis(t *testing.T) {
-	// Test that handler function is created even with nil redis
-	handler := HandleRedis2Button(nil)
 
 	// Test that handler is not nil
 	assert.NotNil(t, handler)

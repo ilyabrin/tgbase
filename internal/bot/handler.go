@@ -20,9 +20,6 @@ func (b *Bot) RegisterHandlers() {
 	b.Handle(telebot.OnQuery, handlers.InlineHandler())
 
 	if b.redis != nil {
-		b.Handle("/redis2", handlers.Redis2Handler(b.redis))
-		b.Handle(handlers.BtnToggle, handlers.HandleRedis2Button(b.redis))
-
 		// FSM: multi-step registration demo.
 		// TextHandler is the fallback for users with no active state.
 		f := fsm.New(fsm.NewRedisStorage(b.redis, fsm.WithTTL(3600))).

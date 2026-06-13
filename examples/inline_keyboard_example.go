@@ -100,8 +100,7 @@ func HandleCallbacks(redis *redis.Client, i18n *i18n.I18n) telebot.HandlerFunc {
 				"Available commands:\n" +
 				"/start - Start the bot\n" +
 				"/menu - Show main menu\n" +
-				"/question - Ask a question\n" +
-				"/redis2 - Redis demo (if available)"
+				"/question - Ask a question"
 
 		case "btn_stats":
 			responseMessage = "📊 Bot Statistics\n\n" +
