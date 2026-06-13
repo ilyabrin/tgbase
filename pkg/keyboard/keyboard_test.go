@@ -66,3 +66,55 @@ func TestBuilder_Chaining(t *testing.T) {
 	result := b.Row(Btn("A", "a"))
 	assert.Equal(t, b, result, "Row should return the same builder for chaining")
 }
+
+// --- Reply keyboard ---
+
+func TestReply_Build_NotNil(t *testing.T) {
+	kb := Reply().Row("Profile", "Settings").Row("Help").Build()
+	require.NotNil(t, kb)
+	require.NotNil(t, kb.ReplyKeyboard)
+}
+
+func TestReply_RowCount(t *testing.T) {
+	kb := Reply().Row("A", "B").Row("C").Build()
+	assert.Len(t, kb.ReplyKeyboard, 2)
+	assert.Len(t, kb.ReplyKeyboard[0], 2)
+	assert.Len(t, kb.ReplyKeyboard[1], 1)
+}
+
+func TestReply_ButtonText(t *testing.T) {
+	kb := Reply().Row("Hello").Build()
+	assert.Equal(t, "Hello", kb.ReplyKeyboard[0][0].Text)
+}
+
+func TestReply_ResizeEnabledByDefault(t *testing.T) {
+	kb := Reply().Build()
+	assert.True(t, kb.ResizeKeyboard)
+}
+
+func TestReply_OneTime(t *testing.T) {
+	kb := Reply().OneTime().Build()
+	assert.True(t, kb.OneTimeKeyboard)
+}
+
+func TestReply_Persistent(t *testing.T) {
+	kb := Reply().Persistent().Build()
+	assert.True(t, kb.IsPersistent)
+}
+
+func TestReply_Placeholder(t *testing.T) {
+	kb := Reply().Placeholder("Type here...").Build()
+	assert.Equal(t, "Type here...", kb.Placeholder)
+}
+
+func TestReply_Chaining(t *testing.T) {
+	b := Reply()
+	result := b.Row("A")
+	assert.Equal(t, b, result)
+}
+
+func TestRemove(t *testing.T) {
+	kb := Remove()
+	require.NotNil(t, kb)
+	assert.True(t, kb.RemoveKeyboard)
+}

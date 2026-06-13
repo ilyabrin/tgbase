@@ -91,6 +91,25 @@ Environment variable overrides: `TELEGRAM_TOKEN`, `POSTGRES_DSN`, `REDIS_ADDR`.
 
 ---
 
+## Error handler
+
+Register once in `bot.New` - called whenever any handler returns an error.
+
+```go
+b, err := bot.New(token,
+    bot.WithErrorHandler(func(err error, c telebot.Context) {
+        log.Printf("handler error: %v", err)
+        if c != nil {
+            c.Send("Something went wrong, please try again.")
+        }
+    }),
+)
+```
+
+`c` may be `nil` for errors that occur outside a handler (e.g. polling errors).
+
+---
+
 ## Bot creation API
 
 `bot.New` accepts functional options - pass only what you need:
@@ -276,6 +295,35 @@ func InlineHandler() telebot.HandlerFunc {
 ```
 
 > **Note:** inline mode must be enabled in [@BotFather](https://t.me/BotFather) → Bot Settings → Inline Mode.
+
+---
+
+## Reply keyboards (`pkg/keyboard`)
+
+Persistent button row shown above the message input field.
+
+```go
+// Show keyboard
+kb := keyboard.Reply().
+    Row("Profile", "Settings").
+    Row("Help").
+    OneTime().   // hide after first tap
+    Build()
+c.Send("Choose:", kb)
+
+// Remove keyboard
+c.Send("Done!", keyboard.Remove())
+```
+
+| Method           | Description                                |
+| ---------------- | ------------------------------------------ |
+| `Reply()`        | Create builder (resize enabled by default) |
+| `.Row(texts...)` | Append a row of text buttons               |
+| `.OneTime()`     | Hide after first use                       |
+| `.Persistent()`  | Keep visible between messages              |
+| `.Placeholder()` | Input field hint text                      |
+| `.Build()`       | Return `*telebot.ReplyMarkup`              |
+| `Remove()`       | Remove current reply keyboard              |
 
 ---
 

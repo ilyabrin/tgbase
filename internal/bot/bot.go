@@ -24,6 +24,7 @@ type Bot struct {
 	adminIDs      []int64
 	webhookAddr   string
 	pollerTimeout time.Duration
+	errorHandler  func(error, telebot.Context)
 }
 
 // Option configures a Bot.
@@ -54,6 +55,13 @@ func WithWebhook(listenAddr string) Option {
 	return func(b *Bot) { b.webhookAddr = listenAddr }
 }
 
+// WithErrorHandler sets a function called whenever a handler returns an error.
+// Use it to send a user-facing message, log to an external system, etc.
+// ctx may be nil for errors that occur outside a handler (e.g. polling errors).
+func WithErrorHandler(fn func(err error, ctx telebot.Context)) Option {
+	return func(b *Bot) { b.errorHandler = fn }
+}
+
 // WithPollerTimeout overrides the default 10s long-poll timeout.
 func WithPollerTimeout(d time.Duration) Option {
 	return func(b *Bot) { b.pollerTimeout = d }
@@ -78,8 +86,9 @@ func New(token string, opts ...Option) (*Bot, error) {
 	}
 
 	tgb, err := telebot.NewBot(telebot.Settings{
-		Token:  token,
-		Poller: poller,
+		Token:   token,
+		Poller:  poller,
+		OnError: b.errorHandler,
 	})
 	if err != nil {
 		return nil, err

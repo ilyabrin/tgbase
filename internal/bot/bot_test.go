@@ -1,15 +1,18 @@
 package bot
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
+
 	"tgbase/internal/i18n"
 	"tgbase/internal/redis"
 	"tgbase/pkg/logger"
-	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	tb "gopkg.in/telebot.v3"
 )
 
@@ -86,6 +89,19 @@ func TestBot_DefaultLogger(t *testing.T) {
 }
 
 // --- Option setters ---
+
+func TestWithErrorHandler(t *testing.T) {
+	var gotErr error
+	handler := func(err error, _ tb.Context) { gotErr = err }
+
+	b := &Bot{}
+	WithErrorHandler(handler)(b)
+	require.NotNil(t, b.errorHandler)
+
+	sentinel := errors.New("test error")
+	b.errorHandler(sentinel, nil)
+	assert.Equal(t, sentinel, gotErr)
+}
 
 func TestBotOptions(t *testing.T) {
 	t.Run("WithRedis", func(t *testing.T) {

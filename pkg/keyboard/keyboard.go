@@ -53,3 +53,68 @@ func (b *Builder) Build() *telebot.ReplyMarkup {
 	b.m.Inline(b.rows...)
 	return b.m
 }
+
+// --- Reply keyboard ---
+
+// ReplyBuilder builds a reply keyboard (the persistent button row shown above
+// the message input field).
+//
+// Usage:
+//
+//	kb := keyboard.Reply().
+//	    Row("Profile", "Settings").
+//	    Row("Help").
+//	    Build()
+//	c.Send("Choose:", kb)
+//
+// To remove the keyboard:
+//
+//	c.Send("Done!", keyboard.Remove())
+type ReplyBuilder struct {
+	m    *telebot.ReplyMarkup
+	rows []telebot.Row
+}
+
+// Reply returns a new ReplyBuilder with resize enabled by default.
+func Reply() *ReplyBuilder {
+	return &ReplyBuilder{m: &telebot.ReplyMarkup{ResizeKeyboard: true}}
+}
+
+// Row appends a row of text buttons.
+func (b *ReplyBuilder) Row(texts ...string) *ReplyBuilder {
+	btns := make([]telebot.Btn, len(texts))
+	for i, t := range texts {
+		btns[i] = b.m.Text(t)
+	}
+	b.rows = append(b.rows, b.m.Row(btns...))
+	return b
+}
+
+// OneTime hides the keyboard after the first use.
+func (b *ReplyBuilder) OneTime() *ReplyBuilder {
+	b.m.OneTimeKeyboard = true
+	return b
+}
+
+// Persistent keeps the keyboard visible between messages.
+func (b *ReplyBuilder) Persistent() *ReplyBuilder {
+	b.m.IsPersistent = true
+	return b
+}
+
+// Placeholder sets the input field hint text shown while the keyboard is open.
+func (b *ReplyBuilder) Placeholder(text string) *ReplyBuilder {
+	b.m.Placeholder = text
+	return b
+}
+
+// Build finalises the keyboard and returns the *telebot.ReplyMarkup.
+func (b *ReplyBuilder) Build() *telebot.ReplyMarkup {
+	b.m.Reply(b.rows...)
+	return b.m
+}
+
+// Remove returns a markup that removes any existing reply keyboard.
+func Remove() *telebot.ReplyMarkup {
+	return &telebot.ReplyMarkup{RemoveKeyboard: true}
+}
