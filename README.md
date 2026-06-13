@@ -170,6 +170,34 @@ b.Use(middleware.RateLimit(3, time.Minute, func(c telebot.Context) error {
 | `AdminOnly(ids, onReject?)`    | Allow only listed user IDs                     |
 | `Logger(l)`                    | Log every update: user ID, name, text/callback |
 | `RateLimit(n, per, onReject?)` | Per-user sliding window rate limiter           |
+| `Recover(l)`                   | Catch handler panics, log, return error        |
+
+---
+
+## Inline keyboards (`pkg/keyboard`)
+
+```go
+import "tgbase/pkg/keyboard"
+
+kb := keyboard.New().
+    Row(keyboard.Btn("Buy", "btn_buy"), keyboard.Btn("Cancel", "btn_cancel")).
+    Row(keyboard.URL("Website", "https://example.com")).
+    Build()
+
+c.Send("Choose an option:", kb)
+
+// Register callback handlers
+b.Handle("\fbtn_buy",    buyHandler)
+b.Handle("\fbtn_cancel", cancelHandler)
+```
+
+| Function                   | Description                                 |
+| -------------------------- | ------------------------------------------- |
+| `Btn(text, unique, data?)` | Callback button; handler key: `"\f"+unique` |
+| `URL(text, url)`           | Button that opens a URL                     |
+| `New()`                    | Create a builder                            |
+| `.Row(btns...)`            | Append a row; chainable                     |
+| `.Build()`                 | Return `*telebot.ReplyMarkup`               |
 
 ---
 

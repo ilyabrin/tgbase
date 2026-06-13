@@ -134,6 +134,45 @@ func TestRateLimit_ResetsAfterWindow(t *testing.T) {
 	assert.Equal(t, 2, calls)
 }
 
+// --- Recover ---
+
+func TestRecover_PassesThrough(t *testing.T) {
+	l := logger.NewLogger()
+	mw := Recover(l)
+	called := false
+	handler := mw(nextHandler(&called))
+
+	err := handler(&mockContext{senderID: 1})
+	require.NoError(t, err)
+	assert.True(t, called)
+}
+
+func TestRecover_CatchesPanic(t *testing.T) {
+	l := logger.NewLogger()
+	mw := Recover(l)
+	handler := mw(func(c telebot.Context) error {
+		panic("something went wrong")
+	})
+
+	assert.NotPanics(t, func() {
+		err := handler(&mockContext{senderID: 1})
+		assert.Error(t, err, "panic should be converted to an error")
+	})
+}
+
+func TestRecover_CatchesPanic_AnyType(t *testing.T) {
+	l := logger.NewLogger()
+	mw := Recover(l)
+	handler := mw(func(c telebot.Context) error {
+		panic(42) // non-string panic
+	})
+
+	assert.NotPanics(t, func() {
+		err := handler(&mockContext{senderID: 1})
+		assert.Error(t, err)
+	})
+}
+
 func TestRateLimit_IndependentUsers(t *testing.T) {
 	mw := RateLimit(1, time.Minute)
 	calls := map[int64]int{}

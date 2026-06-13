@@ -66,6 +66,22 @@ func Logger(l *logger.Logger) telebot.MiddlewareFunc {
 	}
 }
 
+// Recover catches panics inside handlers, logs them, and returns an error so
+// the bot keeps running. Always register it as the outermost middleware.
+func Recover(l *logger.Logger) telebot.MiddlewareFunc {
+	return func(next telebot.HandlerFunc) telebot.HandlerFunc {
+		return func(c telebot.Context) (err error) {
+			defer func() {
+				if r := recover(); r != nil {
+					l.Error("panic in handler: %v", r)
+					err = fmt.Errorf("internal error")
+				}
+			}()
+			return next(c)
+		}
+	}
+}
+
 // RateLimit allows at most n messages per user per window duration.
 // Excess messages are silently dropped unless onReject is provided.
 func RateLimit(n int, per time.Duration, onReject ...telebot.HandlerFunc) telebot.MiddlewareFunc {
