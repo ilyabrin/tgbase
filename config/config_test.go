@@ -183,3 +183,30 @@ telegram:
 		})
 	}
 }
+
+func TestMustLoad_Success(t *testing.T) {
+	f, err := os.CreateTemp("", "mustload_*.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(f.Name())
+	f.WriteString("telegram:\n  token: test\n")
+	f.Close()
+
+	cfg := MustLoad(f.Name())
+	if cfg == nil {
+		t.Fatal("MustLoad returned nil for valid config")
+	}
+	if cfg.Telegram.Token != "test" {
+		t.Errorf("expected token 'test', got %q", cfg.Telegram.Token)
+	}
+}
+
+func TestMustLoad_Panics(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("MustLoad should panic on missing file")
+		}
+	}()
+	MustLoad("non_existent_file.yaml")
+}

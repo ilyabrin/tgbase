@@ -7,6 +7,7 @@ import (
 	"tgbase/internal/i18n"
 	"tgbase/internal/redis"
 	"tgbase/pkg/logger"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	tb "gopkg.in/telebot.v3"
@@ -82,4 +83,34 @@ func TestBot_DefaultLogger(t *testing.T) {
 	assert.Error(t, err) // token is invalid, but logger must be set before error return
 	assert.Nil(t, b)
 	// No panic - the logger was initialised internally before telebot.NewBot was called.
+}
+
+// --- Option setters ---
+
+func TestBotOptions(t *testing.T) {
+	t.Run("WithRedis", func(t *testing.T) {
+		b := &Bot{}
+		rc := redis.NewMockClient()
+		WithRedis(rc)(b)
+		assert.Equal(t, rc, b.redis)
+	})
+
+	t.Run("WithAdminIDs", func(t *testing.T) {
+		b := &Bot{}
+		ids := []int64{1, 2, 3}
+		WithAdminIDs(ids)(b)
+		assert.Equal(t, ids, b.adminIDs)
+	})
+
+	t.Run("WithPollerTimeout", func(t *testing.T) {
+		b := &Bot{}
+		WithPollerTimeout(45 * time.Second)(b)
+		assert.Equal(t, 45*time.Second, b.pollerTimeout)
+	})
+
+	t.Run("WithWebhook", func(t *testing.T) {
+		b := &Bot{}
+		WithWebhook(":8443")(b)
+		assert.Equal(t, ":8443", b.webhookAddr)
+	})
 }
