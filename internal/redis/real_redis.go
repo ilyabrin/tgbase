@@ -13,11 +13,7 @@ type RealRedisClient struct {
 }
 
 // NewRealRedisClient creates a new real Redis client wrapper
-func NewRealRedisClient(ctx context.Context, cfg struct {
-	Addr     string
-	Password string
-	DB       int
-}) (*RealRedisClient, error) {
+func NewRealRedisClient(ctx context.Context, cfg Config) (*RealRedisClient, error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:     cfg.Addr,
 		Password: cfg.Password,

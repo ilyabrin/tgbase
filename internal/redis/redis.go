@@ -4,6 +4,13 @@ import (
 	"context"
 )
 
+// Config holds Redis connection parameters.
+type Config struct {
+	Addr     string
+	Password string
+	DB       int
+}
+
 // RedisInterface defines the contract for Redis operations
 type RedisInterface interface {
 	Set(ctx context.Context, key string, value any, expiration int64) error
@@ -24,12 +31,8 @@ type Client struct {
 	client RedisInterface
 }
 
-// NewRedisClient creates a new Redis client with real Redis connection
-func NewRedisClient(ctx context.Context, cfg struct {
-	Addr     string
-	Password string
-	DB       int
-}) (*Client, error) {
+// NewRedisClient creates a new Redis client with a real Redis connection.
+func NewRedisClient(ctx context.Context, cfg Config) (*Client, error) {
 	realClient, err := NewRealRedisClient(ctx, cfg)
 	if err != nil {
 		return nil, err
@@ -37,15 +40,12 @@ func NewRedisClient(ctx context.Context, cfg struct {
 	return &Client{client: realClient}, nil
 }
 
-// NewMockClient creates a new Redis client with mock implementation for testing
+// NewMockClient creates a Redis client backed by an in-memory mock (for testing).
 func NewMockClient() *Client {
 	return &Client{client: NewMockRedisClient()}
 }
 
-// Client methods delegate to the underlying RedisInterface
-func (c *Client) Close() error {
-	return c.client.Close()
-}
+func (c *Client) Close() error { return c.client.Close() }
 
 func (c *Client) Set(ctx context.Context, key string, value any, expiration int64) error {
 	return c.client.Set(ctx, key, value, expiration)

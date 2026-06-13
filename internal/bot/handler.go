@@ -6,16 +6,14 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-func (b *Bot) registerHandlers() {
-	// Register /start command handler
-	b.bot.Handle("/start", handlers.StartHandler(b.i18n))
+// RegisterHandlers wires all application handlers to the bot.
+// Add your handlers here.
+func (b *Bot) RegisterHandlers() {
+	b.Handle("/start", handlers.StartHandler(b.i18n))
+	b.Handle(telebot.OnText, handlers.TextHandler(b.i18n))
 
-	// Register text message handler
-	b.bot.Handle(telebot.OnText, handlers.TextHandler(b.i18n))
-
-	// Register Redis commands if Redis is available
 	if b.redis != nil {
-		b.bot.Handle("/redis2", handlers.Redis2Handler(b.redis))
-		b.bot.Handle(handlers.BtnToggle, handlers.HandleRedis2Button(b.redis))
+		b.Handle("/redis2", handlers.Redis2Handler(b.redis))
+		b.Handle(handlers.BtnToggle, handlers.HandleRedis2Button(b.redis))
 	}
 }

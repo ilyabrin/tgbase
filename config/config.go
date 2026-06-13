@@ -27,6 +27,15 @@ type Config struct {
 	} `yaml:"telegram"`
 }
 
+// MustLoad loads the config and panics on error. Useful in main().
+func MustLoad(path string) *Config {
+	cfg, err := LoadConfig(path)
+	if err != nil {
+		panic("failed to load config: " + err.Error())
+	}
+	return cfg
+}
+
 func LoadConfig(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {

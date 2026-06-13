@@ -2,38 +2,23 @@ package main
 
 import (
 	"context"
-	"os"
-	"os/signal"
-	"syscall"
+	"log"
 
 	"tgbase/config"
 	"tgbase/internal/bot"
 	"tgbase/internal/database"
 	"tgbase/internal/i18n"
 	"tgbase/internal/redis"
-	"tgbase/pkg/logger"
 )
 
 func main() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// Инициализация логгера
-	logger := logger.NewLogger()
-
-	// Загрузка конфигурации
 	cfg, err := config.LoadConfig("config.yaml")
 	if err != nil {
-		logger.Fatal("failed to load config: ", err)
+		log.Fatal("failed to load config: ", err)
 	}
 
-	// Инициализация i18n
-	i18n, err := i18n.NewI18n("locales")
-	if err != nil {
-		logger.Fatal("failed to initialize i18n: ", err)
-	}
+	ctx := context.Background()
 
-	// Инициализация базы данных (Postgres или SQLite)
 	var db database.Database
 	if cfg.Database.Type == "postgres" {
 		db, err = database.NewPostgresDB(ctx, cfg.Database.Postgres.DSN)
@@ -41,45 +26,38 @@ func main() {
 		db, err = database.NewSQLiteDB(ctx, cfg.Database.SQLite.Path)
 	}
 	if err != nil {
-		logger.Fatal("failed to connect to database: ", err)
+		log.Fatal("failed to connect to database: ", err)
 	}
 	defer db.Close()
 
-	// Инициализация Redis (опционально)
-	var redisClient *redis.Client
+	locale, err := i18n.NewI18n("locales")
+	if err != nil {
+		log.Fatal("failed to initialize i18n: ", err)
+	}
+
+	opts := []bot.Option{
+		bot.WithDB(db),
+		bot.WithI18n(locale),
+	}
+
 	if cfg.Redis.Enabled {
-		redisConfig := struct {
-			Addr     string
-			Password string
-			DB       int
-		}{
+		redisClient, err := redis.NewRedisClient(ctx, redis.Config{
 			Addr:     cfg.Redis.Addr,
 			Password: cfg.Redis.Password,
 			DB:       cfg.Redis.DB,
-		}
-		redisClient, err = redis.NewRedisClient(ctx, redisConfig)
+		})
 		if err != nil {
-			logger.Fatal("failed to connect to redis: ", err)
+			log.Fatal("failed to connect to redis: ", err)
 		}
 		defer redisClient.Close()
+		opts = append(opts, bot.WithRedis(redisClient))
 	}
 
-	// Инициализация Telegram бота
-	tgBot, err := bot.NewBot(cfg.Telegram.Token, db, redisClient, i18n, logger)
+	b, err := bot.New(cfg.Telegram.Token, opts...)
 	if err != nil {
-		logger.Fatal("failed to initialize bot: ", err)
+		log.Fatal("failed to initialize bot: ", err)
 	}
 
-	// Запуск бота
-	go func() {
-		if err := tgBot.Start(ctx); err != nil {
-			logger.Fatal("bot stopped: ", err)
-		}
-	}()
-
-	// Ожидание сигнала завершения
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	logger.Info("shutting down application...")
+	b.RegisterHandlers()
+	b.Run()
 }

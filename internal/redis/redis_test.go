@@ -358,84 +358,40 @@ func TestRedisClient_ErrorHandling(t *testing.T) {
 
 func TestNewRedisClient_Configurations(t *testing.T) {
 	tests := []struct {
-		name string
-		cfg  struct {
-			Addr     string
-			Password string
-			DB       int
-		}
+		name      string
+		cfg       Config
 		timeout   time.Duration
 		expectErr bool
 	}{
 		{
-			name: "valid config with timeout",
-			cfg: struct {
-				Addr     string
-				Password string
-				DB       int
-			}{
-				Addr:     "localhost:6379",
-				Password: "",
-				DB:       0,
-			},
+			name:      "valid config",
+			cfg:       Config{Addr: "localhost:6379"},
 			timeout:   5 * time.Second,
-			expectErr: false, // Mock always succeeds
+			expectErr: false,
 		},
 		{
-			name: "invalid address format",
-			cfg: struct {
-				Addr     string
-				Password string
-				DB       int
-			}{
-				Addr:     "invalid-address",
-				Password: "",
-				DB:       0,
-			},
+			name:      "invalid address format",
+			cfg:       Config{Addr: "invalid-address"},
 			timeout:   1 * time.Second,
-			expectErr: false, // Mock doesn't validate address
+			expectErr: false,
 		},
 		{
-			name: "empty address",
-			cfg: struct {
-				Addr     string
-				Password string
-				DB       int
-			}{
-				Addr:     "",
-				Password: "",
-				DB:       0,
-			},
+			name:      "empty address",
+			cfg:       Config{},
 			timeout:   1 * time.Second,
-			expectErr: false, // Mock doesn't validate address
+			expectErr: false,
 		},
 		{
-			name: "different DB number",
-			cfg: struct {
-				Addr     string
-				Password string
-				DB       int
-			}{
-				Addr:     "localhost:6379",
-				Password: "",
-				DB:       5,
-			},
+			name:      "different DB number",
+			cfg:       Config{Addr: "localhost:6379", DB: 5},
 			timeout:   1 * time.Second,
-			expectErr: false, // Mock always succeeds
+			expectErr: false,
 		},
 		{
-			name: "with password",
-			cfg: struct {
-				Addr     string
-				Password string
-				DB       int
-			}{
-				Addr:     "localhost:6379",
-				Password: "testpass",
-				DB:       0,
-			},
+			name:      "with password",
+			cfg:       Config{Addr: "localhost:6379", Password: "testpass"},
 			timeout:   1 * time.Second,
-			expectErr: false, // Mock always succeeds
+			expectErr: false,
 		},
 	}
 
@@ -643,14 +599,10 @@ func TestRedisClient_Integration(t *testing.T) {
 		redisAddr = "localhost:6379"
 	}
 
-	cfg := struct {
-		Addr     string
-		Password string
-		DB       int
-	}{
+	cfg := Config{
 		Addr:     redisAddr,
 		Password: "",
-		DB:       1, // Use DB 1 for testing
+		DB:       1,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)

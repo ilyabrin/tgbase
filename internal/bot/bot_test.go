@@ -12,216 +12,74 @@ import (
 	tb "gopkg.in/telebot.v3"
 )
 
-// Helper function to create test dependencies
 func createTestDependencies(t *testing.T) (*i18n.I18n, *logger.Logger) {
-	// Create temp directory for i18n files
 	tempDir, err := os.MkdirTemp("", "bot_test_i18n")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	t.Cleanup(func() { os.RemoveAll(tempDir) })
 
-	// Create test English locale file
 	enContent := `welcome: "Welcome to the test bot!"`
-	enFile := filepath.Join(tempDir, "en.yaml")
-	if err := os.WriteFile(enFile, []byte(enContent), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(tempDir, "en.yaml"), []byte(enContent), 0644); err != nil {
 		t.Fatalf("Failed to write en.yaml: %v", err)
 	}
 
-	// Create i18n instance
 	i18nInstance, err := i18n.NewI18n(tempDir)
 	if err != nil {
 		t.Fatalf("Failed to create i18n: %v", err)
 	}
-
-	// Create logger
-	testLogger := logger.NewLogger()
-
-	return i18nInstance, testLogger
+	return i18nInstance, logger.NewLogger()
 }
 
-// TestNewBot tests the NewBot function with invalid tokens
-func TestNewBot(t *testing.T) {
-	tests := []struct {
-		name    string
-		token   string
-		wantErr bool
-	}{
-		{
-			name:    "invalid empty token",
-			token:   "",
-			wantErr: true,
-		},
-		{
-			name:    "invalid short token",
-			token:   "123",
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			i18nInstance, testLogger := createTestDependencies(t)
-
-			bot, err := NewBot(tt.token, nil, nil, i18nInstance, testLogger)
-
-			if tt.wantErr {
-				assert.Error(t, err)
-				assert.Nil(t, bot)
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, bot)
-			}
-		})
-	}
-}
-
-// TestNewBotWebhook tests the NewBotWebhook function
-func TestNewBotWebhook(t *testing.T) {
-	tests := []struct {
-		name    string
-		token   string
-		wantErr bool
-	}{
-		{
-			name:    "invalid empty token webhook",
-			token:   "",
-			wantErr: true,
-		},
-		{
-			name:    "invalid short token webhook",
-			token:   "123",
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			i18nInstance, testLogger := createTestDependencies(t)
-
-			bot, err := NewBotWebhook(tt.token, nil, nil, i18nInstance, testLogger)
-
-			if tt.wantErr {
-				assert.Error(t, err)
-				assert.Nil(t, bot)
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, bot)
-			}
-		})
-	}
-}
-
-// Note: TestBot_Start is skipped because it requires a valid Telegram bot token
-// and makes actual API calls to Telegram, which is not suitable for unit tests.
-
-// TestBot_registerHandlers tests the registerHandlers method logic
-func TestBot_registerHandlers(t *testing.T) {
+func TestNew_InvalidToken(t *testing.T) {
 	i18nInstance, testLogger := createTestDependencies(t)
 
-	t.Run("with Redis client", func(t *testing.T) {
-		bot := &Bot{
-			bot:    nil, // We can't mock telebot.Bot easily, so we test the logic
-			db:     nil,
-			redis:  &redis.Client{}, // Non-nil Redis
-			i18n:   i18nInstance,
-			logger: testLogger,
-		}
-
-		// Test that the Redis field is checked
-		assert.NotNil(t, bot.redis)
-		assert.Equal(t, i18nInstance, bot.i18n)
-	})
-
-	t.Run("without Redis client", func(t *testing.T) {
-		bot := &Bot{
-			bot:    nil,
-			db:     nil,
-			redis:  nil, // No Redis
-			i18n:   i18nInstance,
-			logger: testLogger,
-		}
-
-		// Test that the Redis field is nil
-		assert.Nil(t, bot.redis)
-		assert.Equal(t, i18nInstance, bot.i18n)
-	})
+	for _, token := range []string{"", "123", "short", "invalid-token-format"} {
+		b, err := New(token, WithI18n(i18nInstance), WithLogger(testLogger))
+		assert.Error(t, err, "token=%q should fail", token)
+		assert.Nil(t, b)
+	}
 }
 
-// TestBot_struct tests Bot struct field access
-func TestBot_struct(t *testing.T) {
+func TestNew_WithWebhook_InvalidToken(t *testing.T) {
 	i18nInstance, testLogger := createTestDependencies(t)
 
-	bot := &Bot{
+	b, err := New("", WithWebhook(":8080"), WithI18n(i18nInstance), WithLogger(testLogger))
+	assert.Error(t, err)
+	assert.Nil(t, b)
+}
+
+func TestBot_RegisterHandlers_WithRedis(t *testing.T) {
+	i18nInstance, testLogger := createTestDependencies(t)
+
+	b := &Bot{
 		bot:    &tb.Bot{},
-		db:     nil,
-		redis:  nil,
+		redis:  &redis.Client{},
 		i18n:   i18nInstance,
 		logger: testLogger,
 	}
 
-	// Test that all fields are accessible and set correctly
-	assert.NotNil(t, bot.bot)
-	assert.Nil(t, bot.db)
-	assert.Nil(t, bot.redis)
-	assert.Equal(t, i18nInstance, bot.i18n)
-	assert.Equal(t, testLogger, bot.logger)
+	assert.NotNil(t, b.redis)
+	assert.Equal(t, i18nInstance, b.i18n)
 }
 
-// TestNewBot_ValidTokenSimulation tests NewBot with error scenarios
-func TestNewBot_ErrorCases(t *testing.T) {
+func TestBot_RegisterHandlers_WithoutRedis(t *testing.T) {
 	i18nInstance, testLogger := createTestDependencies(t)
 
-	// Test what happens when telebot.NewBot would fail
-	// We can't actually test this without mocking telebot, but we can test the error path coverage
-	tests := []struct {
-		name  string
-		token string
-	}{
-		{
-			name:  "token too short",
-			token: "short",
-		},
-		{
-			name:  "invalid format token",
-			token: "invalid-token-format",
-		},
+	b := &Bot{
+		bot:    &tb.Bot{},
+		i18n:   i18nInstance,
+		logger: testLogger,
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// These will fail with actual API calls, which tests the error path
-			bot, err := NewBot(tt.token, nil, nil, i18nInstance, testLogger)
-			assert.Error(t, err)
-			assert.Nil(t, bot)
-		})
-	}
+	assert.Nil(t, b.redis)
+	assert.Equal(t, i18nInstance, b.i18n)
 }
 
-// TestNewBotWebhook_ErrorCases tests NewBotWebhook with error scenarios
-func TestNewBotWebhook_ErrorCases(t *testing.T) {
-	i18nInstance, testLogger := createTestDependencies(t)
-
-	tests := []struct {
-		name  string
-		token string
-	}{
-		{
-			name:  "token too short webhook",
-			token: "short",
-		},
-		{
-			name:  "invalid format token webhook",
-			token: "invalid-token-format",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// These will fail with actual API calls, which tests the error path
-			bot, err := NewBotWebhook(tt.token, nil, nil, i18nInstance, testLogger)
-			assert.Error(t, err)
-			assert.Nil(t, bot)
-		})
-	}
+func TestBot_DefaultLogger(t *testing.T) {
+	// When no logger is provided, New should create a default one.
+	b, err := New("bad-token")
+	assert.Error(t, err) // token is invalid, but logger must be set before error return
+	assert.Nil(t, b)
+	// No panic — the logger was initialised internally before telebot.NewBot was called.
 }
