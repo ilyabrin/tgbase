@@ -17,6 +17,7 @@
 
 ```bash
 git clone https://github.com/ilyabrin/tgbase && cd tgbase
+go mod edit -module github.com/yourname/yourbot  # переименуй модуль под свой проект
 go mod tidy
 # укажи токен бота в config.yaml
 go run cmd/app/main.go

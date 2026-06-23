@@ -17,6 +17,7 @@ Developer-friendly template for building Telegram bots in Go. Clone, configure, 
 
 ```bash
 git clone https://github.com/ilyabrin/tgbase && cd tgbase
+go mod edit -module github.com/yourname/yourbot  # rename the module to your own
 go mod tidy
 # set your token in config.yaml
 go run cmd/app/main.go
