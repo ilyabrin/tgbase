@@ -322,6 +322,19 @@ kb := keyboard.Reply().
     Build()
 c.Send("Choose:", kb)
 
+// Reply buttons send their text as a plain OnText message — handle with c.Text()
+b.Handle(telebot.OnText, func(c telebot.Context) error {
+    switch c.Text() {
+    case "Profile":
+        return c.Send("Your profile...")
+    case "Settings":
+        return c.Send("Settings menu...")
+    case "Help":
+        return c.Send("Help text...")
+    }
+    return nil
+})
+
 // Remove keyboard
 c.Send("Done!", keyboard.Remove())
 ```

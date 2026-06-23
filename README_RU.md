@@ -320,6 +320,19 @@ kb := keyboard.Reply().
     Build()
 c.Send("Выберите:", kb)
 
+// Нажатие на реплай-кнопку отправляет её текст как обычное OnText-сообщение
+b.Handle(telebot.OnText, func(c telebot.Context) error {
+    switch c.Text() {
+    case "Профиль":
+        return c.Send("Ваш профиль...")
+    case "Настройки":
+        return c.Send("Меню настроек...")
+    case "Помощь":
+        return c.Send("Текст помощи...")
+    }
+    return nil
+})
+
 // Убрать клавиатуру
 c.Send("Готово!", keyboard.Remove())
 ```
